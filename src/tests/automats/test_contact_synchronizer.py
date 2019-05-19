@@ -3,6 +3,7 @@ import time
 import pytest
 
 from automats import contact_synchronizer
+from tests.testsupport import e2e_test
 
 from zen import zclient
 from zen import zcontacts
@@ -10,10 +11,9 @@ from zen import zcontacts
 from tests import testsupport
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_contact_create():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     tester_contact = testsupport.prepare_tester_contact()
     scenario = []
     cs = contact_synchronizer.ContactSynchronizer(
@@ -41,10 +41,9 @@ def test_contact_create():
     assert outputs[0]['epp']['response']['result']['@code'] == '1000'
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_contact_recreate():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     tester_contact = testsupport.prepare_tester_contact()
     tester_contact.epp_id = 'not_exising_epp_id'
     tester_contact.person_name = 'Tester Tester ' + str(int(time.time()))
@@ -76,10 +75,9 @@ def test_contact_recreate():
     assert outputs[0]['epp']['response']['result']['@code'] == '1000'
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_contact_update():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     tester_contact = testsupport.prepare_tester_contact()
     existing_contact_id = zclient.make_epp_id(tester_contact.contact_email)
     existing_contact_info = zcontacts.to_dict(tester_contact)

@@ -1,10 +1,18 @@
 import datetime
 
 from django.utils.timezone import make_aware
+import os
 
+import pytest
 from zen import zcontacts
 from zen import zdomains
 from zen import zusers
+
+
+e2e_test = pytest.mark.skipif(
+    os.environ.get('E2E', '0') != '1',
+    reason='skip E2E'
+)
 
 
 def prepare_tester_account(email='tester@zenaida.ai', account_password='tester'):

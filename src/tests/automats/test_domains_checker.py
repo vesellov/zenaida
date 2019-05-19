@@ -4,16 +4,16 @@ import pytest
 from django.conf import settings
 
 from automats import domains_checker
+from tests.testsupport import e2e_test
 
 from zen import zerrors
 
 from tests import testsupport
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_single_domain_exist():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     scenario = []
     dc = domains_checker.DomainsChecker(
         log_events=True,
@@ -40,10 +40,9 @@ def test_single_domain_exist():
     assert outputs[3] == {test_domain_name: True, }
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_single_domain_not_exist():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     scenario = []
     dc = domains_checker.DomainsChecker(
         log_events=True,
@@ -68,10 +67,9 @@ def test_single_domain_not_exist():
     assert outputs[2] == {test_domain_name: False, }
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_two_domains_exist():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     scenario = []
     dc = domains_checker.DomainsChecker(
         log_events=True,
@@ -102,10 +100,9 @@ def test_two_domains_exist():
     assert outputs[4][test_domain_name2] is True
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_single_domain_another_registrar():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     scenario = []
     dc = domains_checker.DomainsChecker(
         log_events=True,
@@ -131,10 +128,9 @@ def test_single_domain_another_registrar():
     assert isinstance(outputs[2], zerrors.EPPResponseFailed)
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_single_domain_another_registrant():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     tester_domain = testsupport.prepare_tester_domain(
         domain_name='test-readonly.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0],
         add_contacts=['registrant', 'admin', ],
@@ -168,10 +164,9 @@ def test_single_domain_another_registrant():
     assert isinstance(outputs[2], zerrors.EPPRegistrantAuthFailed)
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_no_domains():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     scenario = []
     dc = domains_checker.DomainsChecker(
         log_events=True,
@@ -193,10 +188,9 @@ def test_no_domains():
     assert isinstance(outputs[0], zerrors.EPPCommandInvalid)
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_skip_check():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     scenario = []
     dc = domains_checker.DomainsChecker(
         skip_check=True,
@@ -222,10 +216,9 @@ def test_skip_check():
     assert outputs[1] == {test_domain_name: True, }
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_skip_info():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     scenario = []
     dc = domains_checker.DomainsChecker(
         skip_info=True,

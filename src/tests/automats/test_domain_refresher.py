@@ -6,12 +6,12 @@ from django.conf import settings
 from automats import domain_refresher
 
 from tests import testsupport
+from tests.testsupport import e2e_test
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_domain_not_exist():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     scenario = []
     dr = domain_refresher.DomainRefresher(
         log_events=True,
@@ -39,10 +39,9 @@ def test_domain_not_exist():
     assert outputs[0] is None
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_domain_refreshed():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     testsupport.prepare_tester_registrant(epp_id='tester480126cf6j', create_new=True)
     scenario = []
     dr = domain_refresher.DomainRefresher(

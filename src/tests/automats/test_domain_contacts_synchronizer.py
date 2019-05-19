@@ -4,16 +4,16 @@ import pytest
 from django.conf import settings
 
 from automats import domain_contacts_synchronizer
+from tests.testsupport import e2e_test
 
 from zen import zclient
 
 from tests import testsupport
 
 
+@e2e_test
 @pytest.mark.django_db
 def test_domain_update():
-    if os.environ.get('E2E', '0') != '1':
-        return pytest.skip('skip E2E')  # @UndefinedVariable
     tester = testsupport.prepare_tester_account()
     tester_domain = testsupport.prepare_tester_domain(
         domain_name='test.%s' % settings.ZENAIDA_SUPPORTED_ZONES[0],

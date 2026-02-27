@@ -148,6 +148,7 @@ class DomainAdmin(NestedModelAdmin):
         'domain_renew_on_behalf_of_customer',
         'domain_deduplicate_contacts',
         'domain_block_transfer',
+        'domain_unblock_transfer',
     )
     list_display = ('name', 'account', 'status', 'create_date', 'expiry_date', 'get_epp_id', 'epp_statuses', 'extension_info',
                     'registrant_contact', 'admin_contact', 'billing_contact', 'tech_contact', 'modified_date', 'latest_sync_date', 'auto_renew_enabled' )

@@ -316,6 +316,33 @@ class DomainAdmin(NestedModelAdmin):
                 report.append('"%s": OK' % domain_object.name)
         return report
 
+    def _do_domain_unblock_transfer(self, queryset):
+        report = []
+        for domain_object in queryset:
+            existing = BlockedTransfer.blocked_transfers.filter(name=domain_object.name).first()
+            if existing:
+                existing.delete()
+            try:
+                rpc_client.cmd_domain_update(
+                    domain=domain_object.name,
+                    remove_statuses_list=[{'name': 'clientTransferProhibited'}, ],
+                    raise_for_result=False,
+                )
+                zmaster.domain_synchronize_from_backend(
+                    domain_name=domain_object.name,
+                    refresh_contacts=True,
+                    rewrite_contacts=False,
+                    change_owner_allowed=False,
+                    create_new_owner_allowed=False,
+                    soft_delete=True,
+                    raise_errors=False,
+                )
+            except Exception as exc:
+                report.append('"%s": %r' % (domain_object.name, str(exc), ))
+            else:
+                report.append('"%s": OK' % domain_object.name)
+        return report
+
     def domain_synchronize_from_backend(self, request, queryset):
         self.message_user(request, ', '.join(self._do_domain_synchronize_from_backend(queryset, soft_delete=True)))
     domain_synchronize_from_backend.short_description = "Synchronize domain info only"
@@ -350,6 +377,10 @@ class DomainAdmin(NestedModelAdmin):
     def domain_block_transfer(self, request, queryset):
         self.message_user(request, ', '.join(self._do_domain_block_transfer(queryset)))
     domain_block_transfer.short_description = "Block transfer"
+
+    def domain_unblock_transfer(self, request, queryset):
+        self.message_user(request, ', '.join(self._do_domain_unblock_transfer(queryset)))
+    domain_unblock_transfer.short_description = "Unblock transfer"
 
 
 class ContactAdmin(NestedModelAdmin):

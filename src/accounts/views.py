@@ -13,7 +13,7 @@ from django.views.generic.edit import FormView
 from django.conf import settings
 
 from accounts.decorators import check_recaptcha
-from accounts.forms import SignUpForm, SignInViaEmailForm, CustomPasswordResetForm
+from accounts.forms import SignUpForm, SignInViaEmailForm, CustomPasswordResetForm, send_activation_email
 from accounts.models.activation import Activation
 
 from zen.zusers import create_profile
@@ -86,7 +86,7 @@ class SignUpView(FormView):
                 user.is_active = False
                 user.is_approved = settings.ACCOUNT_AUTO_APPROVE
                 user.save()
-                form.send_activation_email(self.request, user)
+                send_activation_email(self.request, user)
                 if user.is_approved:
                     messages.add_message(self.request, messages.SUCCESS,
                                          'You are registered. To activate the account, follow the link sent to the mail.')
@@ -123,9 +123,10 @@ class ActivateView(RedirectView):
         # Remove activation code if it's created more than 24 hours ago.
         activation_code_time_passed = datetime.now(timezone.utc) - activation_obj.created_at
         if activation_code_time_passed.total_seconds() > 60 * 60 * 24:
-            activation_obj.delete()
-            messages.error(self.request, 'Activation code is not valid anymore')
-            return super().get_redirect_url()
+            if (datetime.now(timezone.utc) - activation_obj.email_sent).total_seconds() > 60 * 60 * 24:
+                activation_obj.delete()
+                messages.error(self.request, 'Activation code is not valid anymore')
+                return super().get_redirect_url()
         # Activate user's profile if it's not already activated.
         user = activation_obj.account
         if user.is_active:

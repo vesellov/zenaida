@@ -131,7 +131,7 @@ class AccountAdmin(NestedModelAdmin):
 
 
 class ActivationAdmin(NestedModelAdmin):
-    list_display = ('account', 'code', 'created_at', )
+    list_display = ('account', 'code', 'created_at', 'email_sent')
     search_fields = ('account__email', )
 
 

@@ -8,6 +8,12 @@ class Activation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     code = models.CharField(max_length=20)
     account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='activations')
+    email_sent = models.DateTimeField(
+        blank=True,
+        null=True,
+        default=None,
+        help_text='last date and time activation email sent to the user',
+    )
 
     def __str__(self):
         return 'Activation({})'.format(self.account.email)

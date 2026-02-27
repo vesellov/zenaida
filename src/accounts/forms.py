@@ -6,14 +6,41 @@ from django.contrib.auth.forms import UserCreationForm, PasswordResetForm
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.conf import settings
 from django.utils.crypto import get_random_string
 from django.utils.html import strip_tags
-from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 
 from accounts.models.activation import Activation
 from accounts.models.account import Account
 from lib.captcha import CaptchaField
+
+
+def send_activation_email(request, user):
+    from_email = settings.DEFAULT_FROM_EMAIL
+    domain = Site.objects.get_current().domain
+    subject = 'Profile Activation on %s' % domain
+    act = Activation.objects.filter(account=user).first()
+    if not act:
+        act = Activation()
+        act.code = get_random_string(20)
+        act.account = user
+    act.email_sent = timezone.now()
+    act.save()
+    context = {
+        'domain': domain,
+        'code': act.code,
+    }
+    html_content = render_to_string('email/activation_profile.html', context=context, request=request)
+    text_content = strip_tags(html_content)
+    msg = EmailMultiAlternatives(subject, text_content, from_email, to=[user.email, ], bcc=[user.email, ], cc=[user.email, ])
+    msg.attach_alternative(html_content, 'text/html')
+    try:
+        msg.send()
+    except:
+        logging.exception('Failed to send email')
+    return msg
 
 
 class SignInViaEmailForm(forms.Form):
@@ -33,11 +60,12 @@ class SignInViaEmailForm(forms.Form):
 
     error_messages = {
         'invalid_login': _(
-            'Please enter a correct %(email)s and password. Note that both '
-            'fields may be case-sensitive.'
+            'Please enter a correct email and password. Note that both fields are case-sensitive.'
         ),
         'inactive': _('This account is not active yet. You must verify your email before you can login, please follow the link sent to you via email.'),
         'unapproved': _('This account is not yet approved by the web-site Administrator.'),
+        'inactive_email_resent': _('This account is not active yet, another activation link sent to you via email.'),
+        'inactive_email_not_sent': _('This account is not active yet. Please wait 10 minutes and try again, we will send you another activation email.'),
     }
 
     def __init__(self, request=None, *args, **kwargs):
@@ -68,6 +96,25 @@ class SignInViaEmailForm(forms.Form):
 
     def confirm_login_allowed(self, user):
         if not user.is_active:
+            if settings.ENABLE_USER_ACTIVATION:
+                act = Activation.objects.filter(account=user).first()
+                if not act or not act.email_sent:
+                    send_activation_email(self.request, user)
+                    raise forms.ValidationError(
+                        self.error_messages['inactive_email_resent'],
+                        code='inactive',
+                    )
+                if (timezone.now() - act.email_sent).total_seconds() > 10 * 60:
+                    send_activation_email(self.request, user)
+                    raise forms.ValidationError(
+                        self.error_messages['inactive_email_resent'],
+                        code='inactive',
+                    )
+                else:
+                    raise forms.ValidationError(
+                        self.error_messages['inactive_email_not_sent'],
+                        code='inactive',
+                    )
             raise forms.ValidationError(
                 self.error_messages['inactive'],
                 code='inactive',
@@ -108,34 +155,6 @@ class SignUpForm(UserCreationForm):
                     code='unique_email',
                 )
         return self.cleaned_data
-
-    @staticmethod
-    def send_activation_email(request, user):
-        from_email = settings.DEFAULT_FROM_EMAIL
-        domain = Site.objects.get_current().domain
-        code = get_random_string(20)
-        subject = 'Profile Activation on %s' % domain
-
-        context = {
-            'domain': domain,
-            'code': code,
-        }
-
-        act = Activation()
-        act.code = code
-        act.account = user
-        act.save()
-
-        html_content = render_to_string('email/activation_profile.html', context=context, request=request)
-        text_content = strip_tags(html_content)
-
-        msg = EmailMultiAlternatives(subject, text_content, from_email,
-                                     to=[user.email, ], bcc=[user.email, ], cc=[user.email, ])
-        msg.attach_alternative(html_content, 'text/html')
-        try:
-            msg.send()
-        except:
-            logging.exception('Failed to send email')
 
 
 class CustomPasswordResetForm(PasswordResetForm):

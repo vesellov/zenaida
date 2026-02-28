@@ -238,6 +238,20 @@ class DomainResurrector(automat.Automat):
                 rgp_restore_report={},
             )
         except rpc_error.EPPError as exc:
+            if str(exc.code) == '2304':
+                try:
+                    response = rpc_client.cmd_domain_update(
+                        domain=self.target_domain.name,
+                        rgp_restore=None,
+                        rgp_restore_report=rgp_restore_report,
+                    )
+                except rpc_error.EPPError as exc:
+                    self.log(self.debug_level, 'Exception in doEppDomainUpdate after restore request with report: %s' % exc)
+                    self.event('error', exc)
+                    return
+                else:
+                    self.event('response', response)
+                    return
             self.log(self.debug_level, 'Exception in doEppDomainUpdate after restore request: %s' % exc)
             self.event('error', exc)
             return

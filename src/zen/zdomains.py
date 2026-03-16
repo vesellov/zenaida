@@ -85,6 +85,8 @@ def validate_domain_name(domain):
 
 
 def check_renew_duration_increase_possible(domain_object, current_renew_duration, duration_increase_value):
+    if current_renew_duration is None:
+        current_renew_duration = settings.ZENAIDA_DOMAIN_RENEW_YEARS
     new_expiry_date = domain_object.expiry_date + relativedelta(years=current_renew_duration + duration_increase_value)
     max_expiry_date = timezone.now() + relativedelta(years=settings.ZENAIDA_DOMAIN_RENEW_MAX_YEARS)
     if new_expiry_date >= max_expiry_date:

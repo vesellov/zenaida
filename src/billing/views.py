@@ -445,6 +445,8 @@ class OrderItemDurationIncreaseView(LoginRequiredMixin, View):
         if not zdomains.check_renew_duration_increase_possible(domain_object, current_renew_duration, duration_increase_value):
             messages.error(request, 'Domain %s cannot be renewed for the specified period due to reaching its maximum expiration date.' % domain_object.name)
             return shortcuts.redirect('billing_order_details', order_id=existing_order_item.order.id)
+        if existing_order_item.duration is None:
+            existing_order_item.duration = settings.ZENAIDA_DOMAIN_RENEW_YEARS
         existing_order_item.duration += duration_increase_value
         existing_order_item.price += settings.ZENAIDA_DOMAIN_PRICE * int(duration_increase_value / 2)
         existing_order_item.save()

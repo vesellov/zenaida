@@ -679,6 +679,7 @@ def build_receipt(owner, year=None, month=None, order_id=None):
                 'domain_name': order_item.name,
                 'transaction_date': order.finished_at.strftime('%d %B %Y'),
                 'transaction_type': order_item.get_type_display().replace('Domain ', ''),
+                'duration': int(order_item.duration or settings.ZENAIDA_DOMAIN_RENEW_YEARS),
                 'price': int(order_item.price)
             })
             total_price += int(order_item.price)
